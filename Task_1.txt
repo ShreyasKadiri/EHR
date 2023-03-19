@@ -1,0 +1,111 @@
+• Task 1: Provide a set of SQL scripts to generate a synthetic EHR dataset (in any SQL-
+based environment) based on the common data model version 5.4. The steps and
+
+processes are in the repositories listed below. Please also add steps to:
+o Create 2 users: user1 and readonly. The first user should have write and read
+access to all the schemas and tables, whereas readonly should only have read
+access
+o Create a query that joins at least 2 tables and uses at least 1 WHERE clause,
+analyze it and explain how to improve its performance
+
+
+
+Solution:
+
+show DATABASES
+CREATE DATABASE HealthDatabase;
+
+
+CREATE USER 'user1' IDENTIFIED BY 'password1';
+GRANT ALL PRIVILEGES ON *.* TO 'user1' WITH GRANT OPTION;
+
+CREATE USER 'readonly' IDENTIFIED BY 'password2';
+GRANT SELECT ON HealthDatabase.* TO 'readonly';
+
+SHOW GRANTS FOR 'user1';
+SHOW GRANTS FOR 'readonly';
+
+
+-- Create tables for patient demographic information
+CREATE TABLE patients (
+  patient_id INT PRIMARY KEY,
+  birth_date DATE,
+  gender VARCHAR(50),
+  race VARCHAR(50),
+  ethnicity VARCHAR(50)
+);
+
+-- Create tables for hospital admission information
+CREATE TABLE admissions (
+  admission_id INT PRIMARY KEY,
+  patient_id INT,
+  admission_date DATE,
+  discharge_date DATE,
+  admission_type VARCHAR(50),
+  admission_location VARCHAR(50),
+  discharge_location VARCHAR(50),
+  admission_source VARCHAR(50),
+  FOREIGN KEY (patient_id) REFERENCES patients(patient_id)
+);
+
+-- Create tables for diagnosis information
+CREATE TABLE diagnoses (
+  diagnosis_id INT PRIMARY KEY,
+  patient_id INT,
+  admission_id INT,
+  diagnosis_date DATE,
+  icd_code VARCHAR(50),
+  FOREIGN KEY (patient_id) REFERENCES patients(patient_id),
+  FOREIGN KEY (admission_id) REFERENCES admissions(admission_id)
+);
+
+-- Create tables for procedure information
+CREATE TABLE procedures (
+  procedure_id INT PRIMARY KEY,
+  patient_id INT,
+  admission_id INT,
+  procedure_date DATE,
+  cpt_code VARCHAR(50),
+  FOREIGN KEY (patient_id) REFERENCES patients(patient_id),
+  FOREIGN KEY (admission_id) REFERENCES admissions(admission_id)
+);
+
+-- Insert sample data into patients table
+INSERT INTO patients VALUES
+  (1, '1980-01-01', 'F', 'White', 'Non-Hispanic'),
+  (2, '1975-05-10', 'M', 'Black', 'Non-Hispanic'),
+  (3, '1950-08-15', 'F', 'Hispanic', 'Mexican');
+
+-- Insert sample data into admissions table
+INSERT INTO admissions VALUES
+  (1, 1, '2022-01-01', '2022-01-05', 'Emergency', 'ER', 'Hospital', 'EMS'),
+  (2, 1, '2022-02-01', '2022-02-07', 'Elective', 'Clinic', 'Home', 'Referral'),
+  (3, 2, '2022-03-01', '2022-03-05', 'Urgent', 'ER', 'Hospital', 'Physician');
+
+-- Insert sample data into diagnoses table
+INSERT INTO diagnoses VALUES
+  (1, 1, 1, '2022-01-01', 'I10'),
+  (2, 1, 1, '2022-01-02', 'J40'),
+  (3, 1, 2, '2022-02-01', 'E11.9'),
+  (4, 2, 3, '2022-03-01', 'K25.0');
+
+-- Insert sample data into procedures table
+INSERT INTO procedures VALUES
+  (1, 1, 1, '2022-01-03', '99281'),
+  (2, 1, 1, '2022-01-03', '10060'),
+  (3, 2, 3, '2022-03-02', '31231');
+
+Question 2:
+Create a query that joins at least 2 tables and uses at least 1 WHERE clause,
+analyze it and explain how to improve its performance
+
+
+SELECT *
+FROM admissions
+JOIN diagnoses ON admissions.admission_id = diagnoses.admission_id
+WHERE admissions.admission_type = 'Emergency'
+AND diagnoses.icd_code = 'I10';
+
+
+To improve the performance of this query, you could add indexes on the admission_type and icd_code columns in the admissions and diagnoses tables, 
+respectively. This would allow the database to quickly search and retrieve the relevant rows without having to scan the entire table.
